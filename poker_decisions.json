@@ -1,0 +1,26 @@
+{
+  "UTG": {
+    "AKs": {
+      "Mesa foldeada": "Open raise a 2.5bb",
+      "Raise antes": "3bet a 8-9bb si es fish o loose, fold si es tight",
+      "Limp": "Raise fuerte o fold si el limp parece trampa"
+    },
+    "88": {
+      "Mesa foldeada": "Open raise a 2.5bb",
+      "Raise antes": "Fold si es 3bet fuerte, call si el rival es pasivo"
+    },
+    "JTs": {
+      "Cualquier": "Fold preflop. Demasiado loose desde UTG."
+    }
+  },
+  "MP": {
+    "AQs": {
+      "Mesa foldeada": "Open raise est\u00e1ndar",
+      "Raise antes": "3bet o fold seg\u00fan el tipo de rival"
+    },
+    "KJs": {
+      "Mesa foldeada": "Fold o raise si mesa d\u00e9bil",
+      "Raise antes": "Fold"
+    }
+  }
+}
