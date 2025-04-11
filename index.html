@@ -39,7 +39,7 @@
 
   <script>
     const trees = {
-      CO: {
+      "CO": {
         position: "CO",
         situation: "vs Straddle call, flop dry",
         flop: "8c 4s 2d",
@@ -75,8 +75,6 @@
           }
         }
       }
-
-      // Más árboles por posición se agregan acá (BTN, SB, etc.)
     };
 
     const app = document.getElementById("app");
@@ -125,4 +123,60 @@
         list.appendChild(li);
       }
 
-      app.appendChild
+      app.appendChild(list);
+
+      const back = document.createElement("button");
+      back.innerText = "Volver a posiciones";
+      back.onclick = renderStartScreen;
+      app.appendChild(back);
+    }
+
+    function showResult(result, currentTree) {
+      app.innerHTML = "";
+
+      if (typeof result === "string") {
+        app.innerHTML = `<p>${result}</p><button onclick='renderNode(trees["${currentTree.position}"])'>Volver</button>`;
+      } else if (result.result) {
+        const p = document.createElement("p");
+        p.innerText = result.result;
+        app.appendChild(p);
+
+        if (result.next) {
+          const list = document.createElement("ul");
+          for (const [option, outcome] of Object.entries(result.next)) {
+            const li = document.createElement("li");
+            const btn = document.createElement("button");
+            btn.innerText = option;
+            btn.onclick = () => showResult(outcome, currentTree);
+            li.appendChild(btn);
+            list.appendChild(li);
+          }
+          app.appendChild(list);
+        } else if (result.response && result.options) {
+          const q = document.createElement("p");
+          q.innerText = result.response;
+          app.appendChild(q);
+
+          const list = document.createElement("ul");
+          for (const [option, outcome] of Object.entries(result.options)) {
+            const li = document.createElement("li");
+            const btn = document.createElement("button");
+            btn.innerText = option;
+            btn.onclick = () => showResult(outcome, currentTree);
+            li.appendChild(btn);
+            list.appendChild(li);
+          }
+          app.appendChild(list);
+        }
+
+        const back = document.createElement("button");
+        back.innerText = "Volver";
+        back.onclick = () => renderNode(currentTree);
+        app.appendChild(back);
+      }
+    }
+
+    renderStartScreen();
+  </script>
+</body>
+</html>
