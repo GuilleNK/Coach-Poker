@@ -38,44 +38,72 @@
   <div id="app"></div>
 
   <script>
-    const tree = {
-      position: "CO",
-      situation: "vs Straddle call, flop dry",
-      flop: "8c 4s 2d",
-      stack: "100bb",
-      in_position: false,
-      has_initiative: true,
-      action: {
-        question: "Flop: 8♣ 4♠ 2♦. Tenés la iniciativa pero estás fuera de posición. ¿Qué hacés?",
-        options: {
-          "Cbet 1/3 pot": {
-            result: "Villano puede foldear, pagar o hacer raise.",
-            next: {
-              "Fold": "Ganás el bote. Nodo terminal.",
-              "Call": {
-                turn: "Nodo de turn por definir (según carta)."
-              },
-              "Raise": {
-                response: "¿Qué hacés frente a raise?",
-                options: {
-                  "Fold": "Nodo terminal. Cedés el bote.",
-                  "Call": "Vas al turn con SPR más chico.",
-                  "3bet shove": "Agresivo: sólo con top range o semibluffs."
+    const trees = {
+      CO: {
+        position: "CO",
+        situation: "vs Straddle call, flop dry",
+        flop: "8c 4s 2d",
+        stack: "100bb",
+        in_position: false,
+        has_initiative: true,
+        action: {
+          question: "Flop: 8♣ 4♠ 2♦. Tenés la iniciativa pero estás fuera de posición. ¿Qué hacés?",
+          options: {
+            "Cbet 1/3 pot": {
+              result: "Villano puede foldear, pagar o hacer raise.",
+              next: {
+                "Fold": "Ganás el bote. Nodo terminal.",
+                "Call": {
+                  turn: "Nodo de turn por definir (según carta)."
+                },
+                "Raise": {
+                  response: "¿Qué hacés frente a raise?",
+                  options: {
+                    "Fold": "Nodo terminal. Cedés el bote.",
+                    "Call": "Vas al turn con SPR más chico.",
+                    "3bet shove": "Agresivo: sólo con top range o semibluffs."
+                  }
                 }
               }
+            },
+            "Check": {
+              result: "Villano puede apostar o chequear. Se pierde iniciativa."
+            },
+            "Overbet": {
+              result: "Línea no estándar. Rara vez usada en este board."
             }
-          },
-          "Check": {
-            result: "Villano puede apostar o chequear. Se pierde iniciativa."
-          },
-          "Overbet": {
-            result: "Línea no estándar. Rara vez usada en este board."
           }
         }
       }
+
+      // Más árboles por posición se agregan acá (BTN, SB, etc.)
     };
 
     const app = document.getElementById("app");
+
+    function renderStartScreen() {
+      app.innerHTML = "<h2>¿Desde qué posición estás jugando esta mano?</h2>";
+
+      const positions = ["UTG", "UTG+1", "MP", "HJ", "CO", "BTN", "SB", "BB"];
+      const list = document.createElement("ul");
+
+      positions.forEach(pos => {
+        const li = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.innerText = pos;
+        btn.onclick = () => {
+          if (trees[pos]) {
+            renderNode(trees[pos]);
+          } else {
+            app.innerHTML = `<p>Aún no cargamos decisiones para ${pos}. Pronto lo agregaremos.</p><button onclick="renderStartScreen()">Volver</button>`;
+          }
+        };
+        li.appendChild(btn);
+        list.appendChild(li);
+      });
+
+      app.appendChild(list);
+    }
 
     function renderNode(node) {
       app.innerHTML = "";
@@ -91,61 +119,10 @@
         const btn = document.createElement("button");
         btn.innerText = option;
         btn.onclick = () => {
-          showResult(result);
+          showResult(result, node);
         };
         li.appendChild(btn);
         list.appendChild(li);
       }
 
-      app.appendChild(list);
-    }
-
-    function showResult(result) {
-      app.innerHTML = "";
-
-      if (typeof result === "string") {
-        app.innerHTML = `<p>${result}</p><button onclick='renderNode(tree)'>Volver</button>`;
-      } else if (result.result) {
-        const p = document.createElement("p");
-        p.innerText = result.result;
-        app.appendChild(p);
-
-        if (result.next) {
-          const list = document.createElement("ul");
-          for (const [option, outcome] of Object.entries(result.next)) {
-            const li = document.createElement("li");
-            const btn = document.createElement("button");
-            btn.innerText = option;
-            btn.onclick = () => showResult(outcome);
-            li.appendChild(btn);
-            list.appendChild(li);
-          }
-          app.appendChild(list);
-        } else if (result.response && result.options) {
-          const q = document.createElement("p");
-          q.innerText = result.response;
-          app.appendChild(q);
-
-          const list = document.createElement("ul");
-          for (const [option, outcome] of Object.entries(result.options)) {
-            const li = document.createElement("li");
-            const btn = document.createElement("button");
-            btn.innerText = option;
-            btn.onclick = () => showResult(outcome);
-            li.appendChild(btn);
-            list.appendChild(li);
-          }
-          app.appendChild(list);
-        }
-
-        const back = document.createElement("button");
-        back.innerText = "Volver";
-        back.onclick = () => renderNode(tree);
-        app.appendChild(back);
-      }
-    }
-
-    renderNode(tree);
-  </script>
-</body>
-</html>
+      app.appendChild
