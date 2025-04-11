@@ -1,71 +1,97 @@
-
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Coach de Póker</title>
-  <style>
-    body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 2rem; }
-    select, button { padding: 0.5rem; margin-top: 1rem; width: 100%; }
-    .output { margin-top: 2rem; background: #f0f0f0; padding: 1rem; border-radius: 8px; }
-  </style>
-</head>
-<body>
-  <h1>Coach de Póker - Preflop</h1>
-  <label>Posición:</label>
-  <select id="posSelect"><option>-- Seleccioná --</option></select>
-
-  <label>Mano:</label>
-  <select id="handSelect"><option>-- Seleccioná --</option></select>
-
-  <label>Acción previa:</label>
-  <select id="actionSelect"><option>-- Seleccioná --</option></select>
-
-  <div class="output" id="output">Elegí opciones para ver la recomendación</div>
-
-  <script>
-    let data = {};
-    const posSelect = document.getElementById('posSelect');
-    const handSelect = document.getElementById('handSelect');
-    const actionSelect = document.getElementById('actionSelect');
-    const output = document.getElementById('output');
-
-    fetch('poker_decisions.json')
-      .then(res => res.json())
-      .then(json => {
-        data = json;
-        posSelect.innerHTML += Object.keys(data).map(pos => `<option value="${pos}">${pos}</option>`).join('');
-      });
-
-    posSelect.addEventListener('change', () => {
-      const pos = posSelect.value;
-      handSelect.innerHTML = '<option>-- Seleccioná --</option>';
-      actionSelect.innerHTML = '<option>-- Seleccioná --</option>';
-      output.innerText = 'Elegí opciones para ver la recomendación';
-      if (data[pos]) {
-        handSelect.innerHTML += Object.keys(data[pos]).map(m => `<option value="${m}">${m}</option>`).join('');
+<script>
+const tree = {
+  position: "CO",
+  situation: "vs Straddle call, flop dry",
+  flop: "8c 4s 2d",
+  stack: "100bb",
+  in_position: false,
+  has_initiative: true,
+  action: {
+    question: "Flop: 8♣ 4♠ 2♦. Tenés la iniciativa pero estás fuera de posición. ¿Qué hacés?",
+    options: {
+      "Cbet 1/3 pot": {
+        result: "Villano puede foldear, pagar o hacer raise.",
+        next: {
+          "Fold": "Ganás el bote. Nodo terminal.",
+          "Call": {
+            turn: "Nodo de turn por definir (según carta)."
+          },
+          "Raise": {
+            response: "¿Qué hacés frente a raise?",
+            options: {
+              "Fold": "Nodo terminal. Cedés el bote.",
+              "Call": "Vas al turn con SPR más chico.",
+              "3bet shove": "Agresivo: sólo con top range o semibluffs."
+            }
+          }
+        }
+      },
+      "Check": {
+        result: "Villano puede apostar o chequear. Se pierde iniciativa."
+      },
+      "Overbet": {
+        result: "Línea no estándar. Rara vez usada en este board."
       }
-    });
+    }
+  }
+};
 
-    handSelect.addEventListener('change', () => {
-      const pos = posSelect.value;
-      const hand = handSelect.value;
-      actionSelect.innerHTML = '<option>-- Seleccioná --</option>';
-      output.innerText = 'Elegí opciones para ver la recomendación';
-      if (data[pos] && data[pos][hand]) {
-        actionSelect.innerHTML += Object.keys(data[pos][hand]).map(a => `<option value="${a}">${a}</option>`).join('');
-      }
-    });
+const app = document.getElementById("app");
 
-    actionSelect.addEventListener('change', () => {
-      const pos = posSelect.value;
-      const hand = handSelect.value;
-      const action = actionSelect.value;
-      if (data[pos] && data[pos][hand]) {
-        output.innerText = data[pos][hand][action] || data[pos][hand]['Cualquier'] || 'No hay recomendación.';
+function renderNode(node) {
+  app.innerHTML = "";
+
+  const question = document.createElement("h2");
+  question.innerText = node.action.question;
+  app.appendChild(question);
+
+  const list = document.createElement("ul");
+
+  for (const [option, result] of Object.entries(node.action.options)) {
+    const li = document.createElement("li");
+    const btn = document.createElement("button");
+    btn.innerText = option;
+    btn.onclick = () => {
+      showResult(result);
+    };
+    li.appendChild(btn);
+    list.appendChild(li);
+  }
+
+  app.appendChild(list);
+}
+
+function showResult(result) {
+  app.innerHTML = "";
+
+  if (typeof result === "string") {
+    app.innerHTML = `<p>${result}</p><button onclick='renderNode(tree)'>Volver</button>`;
+  } else if (result.result) {
+    const p = document.createElement("p");
+    p.innerText = result.result;
+    app.appendChild(p);
+
+    if (result.next) {
+      const list = document.createElement("ul");
+      for (const [option, outcome] of Object.entries(result.next)) {
+        const li = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.innerText = option;
+        btn.onclick = () => showResult(outcome);
+        li.appendChild(btn);
+        list.appendChild(li);
       }
-    });
-  </script>
-</body>
-</html>
+      app.appendChild(list);
+    }
+
+    const back = document.createElement("button");
+    back.innerText = "Volver";
+    back.onclick = () => renderNode(tree);
+    app.appendChild(back);
+  }
+}
+
+renderNode(tree);
+</script>
+
+<div id="app" style="font-family: sans-serif; padding: 1rem;"></div>
